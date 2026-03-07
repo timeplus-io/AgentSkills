@@ -41,13 +41,26 @@ $$
 import ...
 
 def <read_fn>():
-    # yield rows or return a list
-    ...
+    # yield rows as a tuple for multiple columns
+    config_parameter = default_value
+    client = setup_client()
+    try:
+        for item in client.stream():
+            yield (col1_value, col2_value, ...) # return tuple for multiple columns
+    finally:
+        client.close()
 
 def <write_fn>(col1, col2):
     # called with one list per column (vectorized)
-    for val1, val2 in zip(col1, col2):
-        ...
+    config_parameter = default_value
+    client = setup_client()
+    try:
+        for val1, val2 in zip(col1, col2):
+            client.send(val1,val2)
+        client.flush()
+    finally:
+        client.close()
+
 $$
 SETTINGS
     type = 'python',
