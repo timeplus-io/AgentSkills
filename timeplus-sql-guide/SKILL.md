@@ -47,10 +47,10 @@ Timeplus SQL and execute it via the ClickHouse-compatible HTTP API.
 
 Always use these environment variables — never hardcode credentials:
 
-```bash
-export TIMEPLUS_HOST=localhost     # hostname or IP
-export TIMEPLUS_USER=default       # username
-export TIMEPLUS_PASSWORD=''        # password (can be empty)
+```
+- TIMEPLUS_HOST       # hostname or IP
+- TIMEPLUS_USER       # username
+- TIMEPLUS_PASSWORD   # password (can be empty)
 ```
 
 ### Running SQL via curl (port 8123)
