@@ -119,6 +119,7 @@ DROP STREAM [IF EXISTS] name;
 
 -- Inspect
 SHOW STREAMS;
+SHOW STREAMS FROM database_name;
 DESCRIBE name;
 ```
 
