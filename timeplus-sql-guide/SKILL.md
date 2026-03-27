@@ -8,7 +8,6 @@ description: >
   using environment variables TIMEPLUS_HOST, TIMEPLUS_USER, and TIMEPLUS_PASSWORD.
   Covers full Timeplus SQL syntax including window functions, JOINs, CTEs, UDFs,
   data types, aggregations, and all DDL/DML statements.
-license: Apache-2.0
 compatibility: >
   Requires curl. Set environment variables: TIMEPLUS_HOST (hostname or IP of
   Timeplus server), TIMEPLUS_USER (username, default: 'default'),
@@ -16,7 +15,7 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0.2"
+  version: "1.0.3"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
   requires:
@@ -289,4 +288,6 @@ Load the relevant reference file when the user's request requires deeper knowled
 - **Simulating data, random streams, test data generation** → `references/RANDOM_STREAMS.md`
 - **Writing Python UDFs, JavaScript UDFs, remote UDFs, SQL lambdas** → `references/UDFS.md`
 - **Python Table Functions** → `references/Python_TABLE_FUNCTION.md`
+- **Scheduled Tasks** → `references/TASK.md`
+- **Alerts** → `references/ALERT.md`
 
