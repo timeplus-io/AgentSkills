@@ -237,7 +237,7 @@ SETTINGS
     address  = 'remote-timeplus-host:8463',
     stream   = 'source_stream',
     user     = 'default',
-    password = '';
+    password = 'your_password';
 ```
 
 ---
@@ -253,7 +253,7 @@ SETTINGS
     type     = 'clickhouse',
     address  = 'clickhouse:9000',
     user     = 'default',
-    password = '',
+    password = 'clickhouse_password',
     database = 'mydb',
     table    = 'users';
 

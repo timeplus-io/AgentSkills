@@ -96,7 +96,7 @@ SETTINGS
     type     = 'clickhouse',
     address  = 'clickhouse:9000',
     user     = 'default',
-    password = '',
+    password = 'clickhouse_password',
     database = 'analytics',
     table    = 'device_alerts';
 ```
@@ -189,8 +189,7 @@ WHERE _tp_time > now() - INTERVAL 1 HOUR
 GROUP BY region
 ORDER BY revenue DESC" | \
 curl "http://${TIMEPLUS_HOST}:8123/?default_format=JSONEachRow" \
-  -H "X-ClickHouse-User: ${TIMEPLUS_USER}" \
-  -H "X-ClickHouse-Key: ${TIMEPLUS_PASSWORD}" \
+  -u "${TIMEPLUS_USER}:${TIMEPLUS_PASSWORD}" \
   --data-binary @-
 ```
 
@@ -200,15 +199,13 @@ curl "http://${TIMEPLUS_HOST}:8123/?default_format=JSONEachRow" \
 # CSV output
 echo "SELECT * FROM table(alerts) LIMIT 100" | \
 curl "http://${TIMEPLUS_HOST}:8123/?default_format=CSV" \
-  -H "X-ClickHouse-User: ${TIMEPLUS_USER}" \
-  -H "X-ClickHouse-Key: ${TIMEPLUS_PASSWORD}" \
+  -u "${TIMEPLUS_USER}:${TIMEPLUS_PASSWORD}" \
   --data-binary @-
 
 # JSON output with schema
 echo "SELECT * FROM table(alerts) LIMIT 100" | \
 curl "http://${TIMEPLUS_HOST}:8123/?default_format=JSON" \
-  -H "X-ClickHouse-User: ${TIMEPLUS_USER}" \
-  -H "X-ClickHouse-Key: ${TIMEPLUS_PASSWORD}" \
+  -u "${TIMEPLUS_USER}:${TIMEPLUS_PASSWORD}" \
   --data-binary @-
 ```
 

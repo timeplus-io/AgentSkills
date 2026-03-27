@@ -16,9 +16,21 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0"
+  version: "1.0.2"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
+  requires:
+    env:
+      - name: TIMEPLUS_HOST
+        description: "The host URL of your Timeplus instance (e.g., timeplus-host)"
+        required: true
+      - name: TIMEPLUS_USER
+        description: "The username for authentication"
+        required: false
+      - name: TIMEPLUS_PASSWORD
+        description: "The password for the Timeplus user"
+        required: false
+        sensitive: true
 ---
 
 # Timeplus Streaming SQL Guide
