@@ -7,7 +7,7 @@ description: >
   streams. Executes SQL via the ClickHouse-compatible HTTP interface on port 8123
   using environment variables TIMEPLUS_HOST, TIMEPLUS_USER, and TIMEPLUS_PASSWORD.
   Covers full Timeplus SQL syntax including window functions, JOINs, CTEs, UDFs,
-  data types, aggregations, and all DDL/DML statements.
+  data types, aggregations, and all DDL/DML statements.s
 compatibility: >
   Requires curl. Set environment variables: TIMEPLUS_HOST (hostname or IP of
   Timeplus server), TIMEPLUS_USER (username, default: 'default'),
@@ -15,21 +15,18 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0.3"
+  version: "1.0.4"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
-  requires:
-    env:
-      - name: TIMEPLUS_HOST
-        description: "The host URL of your Timeplus instance (e.g., timeplus-host)"
-        required: true
-      - name: TIMEPLUS_USER
-        description: "The username for authentication"
-        required: false
-      - name: TIMEPLUS_PASSWORD
-        description: "The password for the Timeplus user"
-        required: false
-        sensitive: true
+  openclaw:
+    requires:
+      env:
+        - TIMEPLUS_HOST
+        - TIMEPLUS_USER
+        - TIMEPLUS_PASSWORD
+      bins:
+        - curl
+    primaryEnv: TIMEPLUS_PASSWORD
 ---
 
 # Timeplus Streaming SQL Guide
