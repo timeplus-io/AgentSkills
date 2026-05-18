@@ -15,7 +15,7 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0.4"
+  version: "1.0.5"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
   openclaw:
@@ -155,6 +155,26 @@ SELECT device_id, temperature FROM table(sensor_data) LIMIT 100;
 -- HISTORICAL + FUTURE: All past events + all future events
 SELECT * FROM sensor_data WHERE _tp_time >= earliest_timestamp();
 ```
+
+### ORDER BY and LIMIT on Streaming Queries
+
+A streaming query result is **unbounded** — new rows arrive forever — so the
+familiar `ORDER BY` / `LIMIT` semantics from batch SQL do not apply directly:
+
+- **`ORDER BY` is not allowed on a non-windowed streaming query.** Sorting
+  requires a finite input. You can only use `ORDER BY` when the upstream is
+  bounded: a `table(...)` historical query, or a windowed aggregation
+  (`tumble`/`hop`/`session`) where each window closure produces a finite batch
+  that gets sorted per window.
+- **`LIMIT n` on a streaming query terminates the query after `n` rows.** It is
+  not "top n by some order" — it is a hard stop. Pair `LIMIT` with a window
+  (`LIMIT n BY window_start`) or use streaming-native top-k aggregates
+  (`top_k`, `min_k`, `max_k`) for per-window ranking.
+- For historical queries (`SELECT ... FROM table(stream)`), `ORDER BY` and
+  `LIMIT` work the normal way.
+
+See `references/TRANSFORMATIONS.md` → **Top-N per Window** for the recommended
+patterns.
 
 ### The `_tp_time` Column
 

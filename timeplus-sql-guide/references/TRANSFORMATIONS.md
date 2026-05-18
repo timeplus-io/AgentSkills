@@ -130,6 +130,52 @@ FROM table(api_logs)
 GROUP BY endpoint;
 ```
 
+### Top-N per Window (streaming)
+
+Timeplus supports per-window ranking, but there is no dedicated "ORDER BY / LIMIT
+per window" doc page. Three working patterns, in order of preference:
+
+**1. Streaming-native top-K aggregates (recommended).** State is bounded inside
+the aggregator, semantics are unambiguous.
+
+```sql
+-- Most frequent values per window
+SELECT window_start, top_k(device_id, 3) AS top3
+FROM tumble(events, 5s)
+GROUP BY window_start;
+```
+
+Use `top_k(col, N)` for most-frequent, `min_k(col, N [, ctx_cols...])` and
+`max_k(col, N [, ctx_cols...])` for smallest/largest with optional context
+columns carried alongside the ranked value.
+
+**2. `ORDER BY ... LIMIT` on top of a windowed aggregation.** Each window
+emission is a finite batch, so the sort + limit applies per window.
+
+```sql
+SELECT device_id, max(cpu) AS m, window_start
+FROM tumble(events, 5s)
+GROUP BY device_id, window_start
+ORDER BY m DESC
+LIMIT 3;
+```
+
+> **Gotcha:** a bare `LIMIT n` directly on a stream (no upstream windowed
+> aggregation) terminates the streaming query at row `n`. Per-window semantics
+> require the windowed `GROUP BY` upstream.
+
+**3. `LIMIT N BY <cols>`.** Keeps N rows per key — useful when you want the raw
+rows rather than aggregated values.
+
+```sql
+SELECT window_start, device_id, cpu
+FROM tumble(events, 5s)
+ORDER BY cpu DESC
+LIMIT 3 BY window_start;
+```
+
+Prefer (1) when possible.
+
 ### Distinct & Array Aggregations
 ```sql
 SELECT
