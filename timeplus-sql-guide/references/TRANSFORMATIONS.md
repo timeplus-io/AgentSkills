@@ -98,6 +98,18 @@ GROUP BY window_start
 EMIT LAST 2h;
 ```
 
+> **Gotcha — `WITH DELAY` requires a windowed source.** Clauses involving a
+> watermark delay (`EMIT AFTER WATERMARK AND DELAY Xs`, `EMIT ON UPDATE WITH
+> DELAY Xs`) only work when the FROM is a streaming window function —
+> `tumble()`, `hop()`, or `session()`. Applying them to a plain
+> `GROUP BY col` over an unwindowed stream errors with
+> `Watermark with delay is only supported with streaming window function`.
+>
+> For a global streaming aggregation (`GROUP BY col` with a time-bounded
+> `WHERE _tp_time > now() - …`), drop the `EMIT` clause entirely — plain
+> `GROUP BY` already emits on every update by default. Adding `EMIT ON UPDATE`
+> alone is redundant but accepted; adding `WITH DELAY` is the rejected form.
+
 ---
 
 ## Aggregations (Streaming and Historical)

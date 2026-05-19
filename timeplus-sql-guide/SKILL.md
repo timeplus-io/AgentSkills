@@ -15,7 +15,7 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0.5"
+  version: "1.0.6"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
   openclaw:
@@ -269,6 +269,7 @@ Common errors and fixes:
 | `Unknown column` | Typo or wrong stream | Run `DESCRIBE stream_name` to check schema |
 | `Streaming query timeout` | Using streaming on port 8123 | Wrap with `table()` for historical query |
 | `Type mismatch` | Wrong data type | Use explicit cast: `cast(val, 'float32')` |
+| `Watermark with delay is only supported with streaming window function` | `EMIT ... WITH DELAY` on a plain `GROUP BY` | Drop the EMIT clause (plain GROUP BY already emits on update), or wrap the source in `tumble()`/`hop()`/`session()` |
 
 **Inspect a stream:**
 ```bash
