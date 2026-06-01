@@ -125,6 +125,12 @@ FROM sensor_data;
 
 UDAFs maintain state across rows within a window or group.
 
+> **Controlling when a UDAF emits.** To emit exactly N rows per flush (or skip
+> emit entirely) instead of hand-rolling a `this.emitted` flag, declare
+> `has_customized_emit: true` and return the emit count from `process()`. See
+> `EMIT_AND_UDAF.md → UDAF emit control` for the full contract, the Python
+> equivalent, and `merge()` correctness rules for distributed UDAFs.
+
 ```sql
 CREATE AGGREGATE FUNCTION udaf_name(param type)
 RETURNS return_type

@@ -15,7 +15,7 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.0.6"
+  version: "1.1.0"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
   openclaw:
@@ -46,6 +46,7 @@ Timeplus SQL and execute it via the ClickHouse-compatible HTTP API.
 | Random streams (simulated data) | `references/RANDOM_STREAMS.md` |
 | Python & JavaScript UDFs | `references/UDFS.md` |
 | Python Table Functions | `references/Python_TABLE_FUNCTION.md` |
+| EMIT clauses & UDAF emit control | `references/EMIT_AND_UDAF.md` |
 
 ---
 
@@ -306,6 +307,7 @@ Load the relevant reference file when the user's request requires deeper knowled
 - **Simulating data, random streams, test data generation** → `references/RANDOM_STREAMS.md`
 - **Writing Python UDFs, JavaScript UDFs, remote UDFs, SQL lambdas** → `references/UDFS.md`
 - **Python Table Functions** → `references/Python_TABLE_FUNCTION.md`
+- **EMIT clause vocabulary, `EMIT AFTER SESSION CLOSE` / `KEY EXPIRE`, event-terminated session windows, UDAF `has_customized_emit`, `MAXSPAN`/`TIMEOUT` constraints** → `references/EMIT_AND_UDAF.md`
 - **Scheduled Tasks** → `references/TASK.md`
 - **Alerts** → `references/ALERT.md`
 

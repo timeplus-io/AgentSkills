@@ -110,6 +110,12 @@ EMIT LAST 2h;
 > `GROUP BY` already emits on every update by default. Adding `EMIT ON UPDATE`
 > alone is redundant but accepted; adding `WITH DELAY` is the rejected form.
 
+> **Advanced EMIT modes.** For the full EMIT vocabulary —
+> `EMIT AFTER SESSION CLOSE` / `AFTER KEY EXPIRE` (event-terminated session
+> windows), `EMIT CHANGELOG` / `DELTA` / `PER EVENT` / `PERIODIC`, the
+> `MAXSPAN` / `TIMEOUT` constraints, and when to use each — see
+> `EMIT_AND_UDAF.md`.
+
 ---
 
 ## Aggregations (Streaming and Historical)
