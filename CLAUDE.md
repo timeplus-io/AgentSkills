@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Timeplus-maintained collection of reusable Claude Code agent skills, published to ClawHub. Each top-level directory is one self-contained skill (currently: `cisco-asa-syslog`, `pulsebot-app-builder`, `searxng-web-search`, `timeplus-design`, `timeplus-sql-guide`). There is no root build, test, or lint step — skills are documentation plus optional reference files and scripts.
+A Timeplus-maintained collection of reusable Claude Code agent skills, published to ClawHub. Each top-level directory is one self-contained skill (currently: `cisco-asa-syslog`, `pulsebot-app-builder`, `searxng-web-search`, `timeplus-app-builder`, `timeplus-design`, `timeplus-sql-guide`). There is no root build, test, or lint step — skills are documentation plus optional reference files and scripts.
 
 ## Skill layout
 
