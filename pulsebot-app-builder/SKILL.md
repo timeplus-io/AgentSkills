@@ -1,12 +1,12 @@
 ---
-name: timeplus-app-builder
-description: Build real-time Timeplus data processing and analysis applications. Creates pure frontend HTML/JavaScript apps that connect directly to Timeplus Proton via @timeplus/proton-javascript-driver (UMD), visualize live streaming data with @timeplus/vistral (UMD), and follow the Timeplus UI style guide. No npm build or bundler required — output is a single self-contained HTML file.
+name: pulsebot-app-builder
+description: Build real-time Timeplus data processing and analysis applications in Pulsebot. Creates pure frontend HTML/JavaScript apps that connect directly to Timeplus Proton via @timeplus/proton-javascript-driver (UMD), visualize live streaming data with @timeplus/vistral (UMD), and follow the Timeplus UI style guide. No npm build or bundler required — output is a single self-contained HTML file.
 license: Apache-2.0
 compatibility: pulsebot>=0.1.0
 allowed-tools: shell, workspace, file_ops
 ---
 
-# Timeplus App Builder
+# Pulsebot App Builder
 
 Use this skill whenever the user asks to build a data processing application, pipeline visualizer, real-time dashboard, streaming analytics app, or any frontend tool that queries or visualizes data from Timeplus Proton.
 
