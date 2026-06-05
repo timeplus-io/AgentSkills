@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Timeplus-maintained collection of reusable Claude Code agent skills, published to ClawHub. Each top-level directory is one self-contained skill (currently: `cisco-asa-syslog`, `searxng-web-search`, `timeplus-app-builder`, `timeplus-sql-guide`). There is no root build, test, or lint step — skills are documentation plus optional reference files and scripts.
+A Timeplus-maintained collection of reusable Claude Code agent skills, published to ClawHub. Each top-level directory is one self-contained skill (currently: `cisco-asa-syslog`, `searxng-web-search`, `timeplus-app-builder`, `timeplus-design`, `timeplus-sql-guide`). There is no root build, test, or lint step — skills are documentation plus optional reference files and scripts.
 
 ## Skill layout
 
@@ -21,6 +21,7 @@ Every skill follows the agentskills.io SKILL.md standard:
 - Directory name and the `name:` field in SKILL.md frontmatter must match (kebab-case).
 - SKILL.md indexes the `references/` files in a quick-reference table near the top — keep that table in sync when adding or renaming references.
 - Long content belongs in `references/`, not inline in SKILL.md.
+- A skill may carry a domain artifact alongside SKILL.md when it follows an external spec — e.g. `timeplus-design` ships a `DESIGN.md` in the [google-labs-code/design.md](https://github.com/google-labs-code/design.md) token format (YAML token front matter + the eight canonical sections) as its source of truth, with SKILL.md as the agentskills.io wrapper that indexes it.
 
 ## SKILL.md frontmatter conventions
 
