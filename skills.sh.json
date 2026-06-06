@@ -1,0 +1,24 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Timeplus Streaming SQL & Apps",
+      "description": "Skills for writing Timeplus streaming SQL and building real-time data apps, dashboards, and UIs on top of Timeplus Proton.",
+      "skills": [
+        "timeplus-sql-guide",
+        "timeplus-app-builder",
+        "timeplus-design",
+        "pulsebot-app-builder"
+      ]
+    },
+    {
+      "title": "Integrations & Utilities",
+      "description": "Standalone skills for web search and security log analysis.",
+      "skills": [
+        "searxng-web-search",
+        "cisco-asa-syslog"
+      ]
+    }
+  ]
+}
