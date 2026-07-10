@@ -157,9 +157,11 @@ RETURNS return_type
 LANGUAGE JAVASCRIPT AS $$ { initialize, process, finalize, serialize, deserialize, merge } $$;
 
 -- Python UDF (Enterprise)
+-- init_function_name/named_collection settings require Enterprise 3.3.1+
 CREATE [OR REPLACE] FUNCTION name(param type, ...)
 RETURNS return_type
-LANGUAGE PYTHON AS $$ ... $$;
+LANGUAGE PYTHON AS $$ ... $$
+[SETTINGS init_function_name = '...', named_collection = '...'];
 
 -- Remote UDF
 CREATE REMOTE FUNCTION name(param type, ...)
