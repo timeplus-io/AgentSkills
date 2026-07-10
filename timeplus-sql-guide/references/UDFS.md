@@ -252,6 +252,9 @@ Pre-installed: `numpy`. Installable: `pandas`, `scipy`, `scikit-learn`, `request
 
 ### Python UDF Pattern
 
+For Timeplus Enterprise 3.2.2+, decode SQL `string` values from Python `bytes`
+before applying text logic:
+
 ```sql
 CREATE OR REPLACE FUNCTION function_name(param type, ...)
 RETURNS return_type
@@ -262,13 +265,14 @@ def to_text(value):
     return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
 
 def function_name(param_values, ...):
-    # param_values is a list; string values are bytes
+    # param_values is a list; string values are bytes in Enterprise 3.2.2+
     # return a list of results of same length
     return [your_logic(to_text(v)) for v in param_values]
 $$;
 ```
 
-For `array(string)`, decode each nested element:
+For Timeplus Enterprise 3.2.2+, `array(string)` elements are bytes too; decode
+each nested element:
 
 ```python
 def to_text(value):

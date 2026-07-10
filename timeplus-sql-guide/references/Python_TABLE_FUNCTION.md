@@ -403,7 +403,7 @@ WHERE  position('timeplus' IN lower(text)) > 0;
 | Using `async def` or `async for` | Not supported — use threads + `queue.Queue` to bridge async libs |
 | Forgetting `type = 'python'` in SETTINGS | Always required |
 | Returning a plain value instead of a tuple in multi-column transform | Each row must be a tuple: `(val1, val2)` |
-| Treating incoming SQL strings as Python `str` | Decode `bytes` values first, including nested `array(string)` elements |
+| Treating incoming SQL strings as Python `str` on Enterprise 3.2.2+ | Decode `bytes` values first, including nested `array(string)` elements |
 | Importing heavy packages at module level in a tight loop | Move imports outside the generator/function body |
 | Installing packages after stream creation | Run `SYSTEM INSTALL PYTHON PACKAGE` before `CREATE EXTERNAL STREAM` |
 | Putting credentials directly in the Python body | Put JSON credentials in a named collection under `init_function_parameters` and parse it in an init hook |
@@ -423,6 +423,7 @@ When helping a user write a Python Table Function, always:
 6. **Test the schema match** — the number and order of columns returned by the function must exactly match the `CREATE EXTERNAL STREAM` column list.
 7. **Use named collections for credentials** — pack secrets as JSON in the
    `init_function_parameters` collection key and parse them in an init hook.
-8. **Decode incoming strings** — write and transform functions receive SQL
-   strings as Python `bytes`; decode them before string matching, regex, JSON
-   object construction, or HTTP request payload generation.
+8. **Decode incoming strings** — on Timeplus Enterprise 3.2.2+, write and
+   transform functions receive SQL strings as Python `bytes`; decode them before
+   string matching, regex, JSON object construction, or HTTP request payload
+   generation.
