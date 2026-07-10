@@ -245,7 +245,8 @@ CREATE EXTERNAL STREAM webhook_sink (
     event_type string,
     payload    string
 )
-AS$$
+AS
+$$
 import requests
 
 def _to_text(value):
