@@ -223,6 +223,17 @@ GROUP BY window_start, device_id;
 Python UDFs run in an embedded Python 3.10 interpreter. They receive
 **lists of values** and must return a list of results.
 
+Version notes:
+
+- Python UDFs are available in Timeplus Enterprise 2.7+.
+- Timeplus Enterprise 3.2.2+ passes SQL `string` values into Python as `bytes`
+  for binary safety, including strings nested inside `array(string)`, tuples,
+  maps, and low-cardinality strings. Decode at the boundary before text
+  processing.
+- Python UDF init hooks with `init_function_name`, `init_function_parameters`,
+  and `named_collection` are available in Timeplus Enterprise 3.3.1+
+  (`timeplusd` v3.3.1-rc.14 or newer build).
+
 ### Install Python Packages
 
 ```bash
@@ -241,18 +252,99 @@ Pre-installed: `numpy`. Installable: `pandas`, `scipy`, `scikit-learn`, `request
 
 ### Python UDF Pattern
 
+For Timeplus Enterprise 3.2.2+, decode SQL `string` values from Python `bytes`
+before applying text logic:
+
 ```sql
 CREATE OR REPLACE FUNCTION function_name(param type, ...)
 RETURNS return_type
 LANGUAGE PYTHON AS $$
 import numpy as np
 
+def to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def function_name(param_values, ...):
-    # param_values is a list
+    # param_values is a list; string values are bytes in Enterprise 3.2.2+
     # return a list of results of same length
-    return [your_logic(v) for v in param_values]
+    return [your_logic(to_text(v)) for v in param_values]
 $$;
 ```
+
+For Timeplus Enterprise 3.2.2+, `array(string)` elements are bytes too; decode
+each nested element:
+
+```python
+def to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
+def to_text_array(values):
+    return [to_text(v) for v in values]
+```
+
+Returning either Python `str` or `bytes` is accepted for SQL `string` results.
+Prefer `str` after text processing; keep `bytes` only when the payload is meant
+to stay binary.
+
+### Python UDF Initialization and Credentials
+
+Python UDFs can define an initialization hook that runs once when the Python
+module is loaded. Use it to parse credentials or other configuration into
+module-level globals before the scalar UDF or aggregate UDF state is used.
+This initialization settings syntax requires Timeplus Enterprise 3.3.1+.
+
+For credentials, prefer a named collection. The UDF metadata stores only the
+collection name; the collection value is resolved when the UDF module loads.
+
+```sql
+CREATE NAMED COLLECTION api_udf_creds AS
+    init_function_parameters = '{"api_key":"secret-token","endpoint":"https://api.example.com"}'
+    NOT OVERRIDABLE;
+
+CREATE OR REPLACE FUNCTION add_api_prefix(value string)
+RETURNS string
+LANGUAGE PYTHON AS $$
+import json
+
+API_KEY = ''
+ENDPOINT = ''
+
+def _tp_init(params):
+    global API_KEY, ENDPOINT
+    cfg = json.loads(params)
+    API_KEY = cfg['api_key']
+    ENDPOINT = cfg['endpoint']
+
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
+def add_api_prefix(values):
+    return [ENDPOINT + ':' + _to_text(v) for v in values]
+$$
+SETTINGS init_function_name = '_tp_init',
+         named_collection = 'api_udf_creds';
+```
+
+Rules from the current DBMS implementation:
+
+- `init_function_name` is optional. If set, the named Python function must exist
+  in the UDF source.
+- The init hook is called with one string argument when `init_function_parameters`
+  is available, and with no arguments when no parameter source is configured.
+- A named collection used for Python UDF credentials should provide the key
+  `init_function_parameters`; pack multiple values into JSON.
+- `named_collection` and direct `init_function_parameters` are mutually
+  exclusive. Both require `init_function_name`.
+- Direct `init_function_parameters` appears in `SHOW CREATE FUNCTION`; a named
+  collection keeps the secret value out of UDF metadata.
+- Creating a UDF that references a named collection requires:
+
+```sql
+GRANT NAMED COLLECTION ON *.* TO user_name;
+```
+
+For Python aggregate UDFs, the init hook runs before aggregate state instances
+are constructed, so constructors can read globals initialized by `_tp_init`.
 
 ### Python UDF Examples
 
@@ -293,11 +385,14 @@ RETURNS array(string)
 LANGUAGE PYTHON AS $$
 import json
 
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def extract_tags(payloads):
     result = []
     for p in payloads:
         try:
-            data = json.loads(p)
+            data = json.loads(_to_text(p))
             result.append(data.get('tags', []))
         except Exception:
             result.append([])
@@ -308,10 +403,13 @@ $$;
 CREATE OR REPLACE FUNCTION classify_message(msg string)
 RETURNS string
 LANGUAGE PYTHON AS $$
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def classify_message(messages):
     categories = []
     for msg in messages:
-        msg_lower = msg.lower()
+        msg_lower = _to_text(msg).lower()
         if any(w in msg_lower for w in ['error', 'fail', 'exception', 'crash']):
             categories.append('error')
         elif any(w in msg_lower for w in ['warn', 'slow', 'timeout']):
@@ -331,8 +429,11 @@ cat <<'EOF' | curl "http://${TIMEPLUS_HOST}:8123/" \
 CREATE OR REPLACE FUNCTION add_prefix(s string)
 RETURNS string
 LANGUAGE PYTHON AS $$
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def add_prefix(strings):
-    return ['prefix_' + s for s in strings]
+    return ['prefix_' + _to_text(s) for s in strings]
 $$
 EOF
 ```

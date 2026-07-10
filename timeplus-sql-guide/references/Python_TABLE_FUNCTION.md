@@ -61,19 +61,115 @@ def <write_fn>(col1, col2):
     finally:
         client.close()
 
+def <init_fn>(params):
+    # optional: params is a string, usually JSON from init_function_parameters
+    pass
+
+def <flush_fn>():
+    # optional for sinks: called on checkpoints and before cleanup
+    pass
+
+def <deinit_fn>():
+    # optional: called once after read/write processing
+    pass
+
 $$
 SETTINGS
     type = 'python',
     read_function_name  = '<read_fn>',    -- optional: for source streams
-    write_function_name = '<write_fn>'   -- optional: for sink streams
+    write_function_name = '<write_fn>',   -- optional: for sink streams
+    init_function_name = '<init_fn>',     -- optional
+    named_collection = '<collection_name>', -- optional credential/config source
+    -- or use direct parameters instead of named_collection:
+    -- init_function_parameters = '<string>',
+    flush_function_name = '<flush_fn>',   -- optional sink hook
+    deinit_function_name = '<deinit_fn>', -- optional cleanup hook
+    mode = 'auto'                         -- optional: auto, streaming, batch
 ;
 ```
 
 **Key rules:**
 - `type = 'python'` is mandatory.
+- Python external-stream read/write/transform support is available in Timeplus
+  Enterprise 3.2.1+.
 - `read_function_name` defaults to the stream name if omitted.
 - `write_function_name` defaults to `read_function_name` if omitted.
 - All Python code goes inside the `$$ ... $$` heredoc.
+- In Timeplus Enterprise 3.2.2+, incoming SQL `string` values are Python
+  `bytes` for binary safety. This affects write functions and `python_table()`
+  transforms, including nested `array(string)` elements. Decode before text
+  processing.
+- `init_function_parameters` requires `init_function_name`.
+- Prefer `named_collection` for credentials. Use direct `init_function_parameters`
+  only for non-secret values or when intentionally overriding an overridable
+  collection key. Direct parameters are stored in stream metadata; named
+  collections keep credentials out of `SHOW CREATE EXTERNAL STREAM`.
+- `flush_function_name` is sink-only. It is called on checkpoints and before
+  cleanup. `deinit_function_name` is called once after processing.
+- Creating or attaching an external stream that references a named collection
+  requires `GRANT NAMED COLLECTION ON *.* TO user_name`.
+
+---
+
+## Credential Pattern — Named Collection + Init Hook
+
+Use a named collection when Python code needs credentials. Put one string value
+under the `init_function_parameters` key, usually JSON. The DBMS merges the named
+collection into external-stream settings before constructing the Python storage,
+then calls the init hook with that string before `read_function_name` or
+`write_function_name` runs. This pattern requires Timeplus Enterprise 3.2.1+.
+
+```sql
+CREATE NAMED COLLECTION api_source_creds AS
+    init_function_parameters = '{"api_key":"secret-token","endpoint":"https://api.example.com/events"}'
+    NOT OVERRIDABLE;
+
+CREATE EXTERNAL STREAM api_events (
+    event_id string,
+    payload  string
+)
+AS
+$$
+import json
+import requests
+
+API_KEY = ''
+ENDPOINT = ''
+
+def _tp_init(params):
+    global API_KEY, ENDPOINT
+    cfg = json.loads(params)
+    API_KEY = cfg['api_key']
+    ENDPOINT = cfg['endpoint']
+
+def read_events():
+    resp = requests.get(
+        ENDPOINT,
+        headers={'Authorization': 'Bearer ' + API_KEY},
+        timeout=10,
+    )
+    resp.raise_for_status()
+    for item in resp.json():
+        yield (str(item.get('id', '')), json.dumps(item))
+$$
+SETTINGS
+    type = 'python',
+    read_function_name = 'read_events',
+    init_function_name = '_tp_init',
+    named_collection = 'api_source_creds';
+```
+
+Operational notes:
+
+- `SHOW CREATE EXTERNAL STREAM` keeps `named_collection = 'api_source_creds'`
+  rather than expanding the credential string.
+- `system.named_collections` can still expose collection values. Restrict named
+  collection privileges to operators.
+- If the collection lacks `init_function_parameters`, the init hook is called
+  with no arguments.
+- Named collection values are merged into the stream settings when the external
+  stream storage is constructed. Recreate the stream when rotating credentials
+  for a long-running Python external stream.
 
 ---
 
@@ -152,14 +248,18 @@ CREATE EXTERNAL STREAM webhook_sink (
     event_type string,
     payload    string
 )
-AS$$
+AS
+$$
 import requests
+
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
 
 def send_to_webhook(event_type, payload):
     for etype, body in zip(event_type, payload):
         requests.post(
             'https://hooks.example.com/ingest',
-            json={'type': etype, 'data': body}
+            json={'type': _to_text(etype), 'data': _to_text(body)}
         )
 $$
 SETTINGS
@@ -303,8 +403,11 @@ WHERE  position('timeplus' IN lower(text)) > 0;
 | Using `async def` or `async for` | Not supported — use threads + `queue.Queue` to bridge async libs |
 | Forgetting `type = 'python'` in SETTINGS | Always required |
 | Returning a plain value instead of a tuple in multi-column transform | Each row must be a tuple: `(val1, val2)` |
+| Treating incoming SQL strings as Python `str` on Enterprise 3.2.2+ | Decode `bytes` values first, including nested `array(string)` elements |
 | Importing heavy packages at module level in a tight loop | Move imports outside the generator/function body |
 | Installing packages after stream creation | Run `SYSTEM INSTALL PYTHON PACKAGE` before `CREATE EXTERNAL STREAM` |
+| Putting credentials directly in the Python body | Put JSON credentials in a named collection under `init_function_parameters` and parse it in an init hook |
+| Setting `init_function_parameters` without `init_function_name` | Define an init hook and set `init_function_name` |
 
 ---
 
@@ -318,3 +421,9 @@ When helping a user write a Python Table Function, always:
 4. **Use `yield` for continuous data** — return a list only when the data set is finite and bounded.
 5. **Keep state in module-level variables** — for stateful transforms, declare state outside the function with `global`.
 6. **Test the schema match** — the number and order of columns returned by the function must exactly match the `CREATE EXTERNAL STREAM` column list.
+7. **Use named collections for credentials** — pack secrets as JSON in the
+   `init_function_parameters` collection key and parse them in an init hook.
+8. **Decode incoming strings** — on Timeplus Enterprise 3.2.2+, write and
+   transform functions receive SQL strings as Python `bytes`; decode them before
+   string matching, regex, JSON object construction, or HTTP request payload
+   generation.
