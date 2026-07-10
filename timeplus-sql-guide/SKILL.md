@@ -7,7 +7,8 @@ description: >
   streams. Executes SQL via the ClickHouse-compatible HTTP interface on port 8123
   using environment variables TIMEPLUS_HOST, TIMEPLUS_USER, and TIMEPLUS_PASSWORD.
   Covers full Timeplus SQL syntax including window functions, JOINs, CTEs, UDFs,
-  data types, aggregations, and all DDL/DML statements.s
+  data types, aggregations, and all DDL/DML statements.
+license: Apache-2.0
 compatibility: >
   Requires curl. Set environment variables: TIMEPLUS_HOST (hostname or IP of
   Timeplus server), TIMEPLUS_USER (username, default: 'default'),
@@ -15,9 +16,16 @@ compatibility: >
   ingest, port 3218 must also be accessible.
 metadata:
   author: timeplus-io
-  version: "1.1.0"
+  version: "1.1.1"
   docs: https://docs.timeplus.com
   github: https://github.com/timeplus-io/proton
+  tags:
+    - timeplus
+    - streaming-sql
+    - sql
+    - real-time-analytics
+    - materialized-views
+    - udf
   openclaw:
     requires:
       env:
@@ -45,8 +53,10 @@ Timeplus SQL and execute it via the ClickHouse-compatible HTTP API.
 | Full SQL syntax, types, functions | `references/SQL_REFERENCE.md` |
 | Random streams (simulated data) | `references/RANDOM_STREAMS.md` |
 | Python & JavaScript UDFs | `references/UDFS.md` |
-| Python Table Functions | `references/Python_TABLE_FUNCTION.md` |
+| Python Table Functions | `references/PYTHON_TABLE_FUNCTION.md` |
 | EMIT clauses & UDAF emit control | `references/EMIT_AND_UDAF.md` |
+| Scheduled tasks (periodic bounded queries) | `references/TASK.md` |
+| Real-time alerts | `references/ALERT.md` |
 
 ---
 
@@ -65,8 +75,8 @@ Always use these environment variables — never hardcode credentials:
 ### Running SQL via curl (port 8123)
 
 Port 8123 is the ClickHouse-compatible HTTP interface. Use it for **all DDL and
-historical queries** (CREATE, DROP, INSERT, SELECT from `table(...)`). 
-Always use username password with -u option
+historical queries** (CREATE, DROP, INSERT, SELECT from `table(...)`).
+Always pass credentials with curl's `-u` option.
 
 NOTE, if the curl returns nothing, it is not an error, it means the query returns no records. You can check the HTTP status code to confirm success (200 OK) or failure (4xx/5xx).
 
@@ -306,7 +316,7 @@ Load the relevant reference file when the user's request requires deeper knowled
 - **Data types, full function catalog, query settings, all DDL** → `references/SQL_REFERENCE.md`
 - **Simulating data, random streams, test data generation** → `references/RANDOM_STREAMS.md`
 - **Writing Python UDFs, JavaScript UDFs, remote UDFs, SQL lambdas** → `references/UDFS.md`
-- **Python Table Functions** → `references/Python_TABLE_FUNCTION.md`
+- **Python Table Functions** → `references/PYTHON_TABLE_FUNCTION.md`
 - **EMIT clause vocabulary, `EMIT AFTER SESSION CLOSE` / `KEY EXPIRE`, event-terminated session windows, UDAF `has_customized_emit`, `MAXSPAN`/`TIMEOUT` constraints** → `references/EMIT_AND_UDAF.md`
 - **Scheduled Tasks** → `references/TASK.md`
 - **Alerts** → `references/ALERT.md`

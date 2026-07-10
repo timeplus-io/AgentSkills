@@ -1,10 +1,10 @@
-# Timeplus Python Table Functions — Skill Guide
+# Python Table Functions in Timeplus
 
 ## Overview
 
 Python Table Functions let you embed Python code directly into Timeplus streaming SQL pipelines. They are defined as **external streams** with Python logic inside a `$$ ... $$` block, and support three operation modes: **read** (custom source), **write** (custom sink), and **transform** (stateful or stateless row/batch processing).
 
-Use this skill when a user asks to:
+Use this reference when the user asks to:
 - Connect to a data source or sink that has no native Timeplus connector
 - Apply custom Python logic, ML inference, or enrichment to a stream
 - Read from a WebSocket, REST API, proprietary SDK, or file format
