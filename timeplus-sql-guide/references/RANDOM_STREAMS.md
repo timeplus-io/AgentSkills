@@ -1,4 +1,4 @@
-# Random Streams — Skill Guide for Timeplus SQL Agent
+# Random Streams in Timeplus
 
 Random streams generate synthetic data continuously without any external source.
 They are ideal for development, testing, demos, and load testing.
