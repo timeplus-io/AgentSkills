@@ -221,10 +221,18 @@ GROUP BY window_start, device_id;
 ## 3. Python UDF (Enterprise 2.7+)
 
 Python UDFs run in an embedded Python 3.10 interpreter. They receive
-**lists of values** and must return a list of results. Current Timeplus engines
-pass SQL `string` values into Python as `bytes` for binary safety, including
-strings nested inside `array(string)`, tuples, maps, and low-cardinality strings.
-Decode at the boundary before text processing.
+**lists of values** and must return a list of results.
+
+Version notes:
+
+- Python UDFs are available in Timeplus Enterprise 2.7+.
+- Timeplus Enterprise 3.2.2+ passes SQL `string` values into Python as `bytes`
+  for binary safety, including strings nested inside `array(string)`, tuples,
+  maps, and low-cardinality strings. Decode at the boundary before text
+  processing.
+- Python UDF init hooks with `init_function_name`, `init_function_parameters`,
+  and `named_collection` are available in Timeplus Enterprise 3.3.1+
+  (`timeplusd` v3.3.1-rc.14 or newer build).
 
 ### Install Python Packages
 
@@ -279,6 +287,7 @@ to stay binary.
 Python UDFs can define an initialization hook that runs once when the Python
 module is loaded. Use it to parse credentials or other configuration into
 module-level globals before the scalar UDF or aggregate UDF state is used.
+This initialization settings syntax requires Timeplus Enterprise 3.3.1+.
 
 For credentials, prefer a named collection. The UDF metadata stores only the
 collection name; the collection value is resolved when the UDF module loads.

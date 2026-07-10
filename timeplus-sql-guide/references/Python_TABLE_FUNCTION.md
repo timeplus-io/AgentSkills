@@ -90,12 +90,15 @@ SETTINGS
 
 **Key rules:**
 - `type = 'python'` is mandatory.
+- Python external-stream read/write/transform support is available in Timeplus
+  Enterprise 3.2.1+.
 - `read_function_name` defaults to the stream name if omitted.
 - `write_function_name` defaults to `read_function_name` if omitted.
 - All Python code goes inside the `$$ ... $$` heredoc.
-- Incoming SQL `string` values are Python `bytes` for binary safety. This
-  affects write functions and `python_table()` transforms, including nested
-  `array(string)` elements. Decode before text processing.
+- In Timeplus Enterprise 3.2.2+, incoming SQL `string` values are Python
+  `bytes` for binary safety. This affects write functions and `python_table()`
+  transforms, including nested `array(string)` elements. Decode before text
+  processing.
 - `init_function_parameters` requires `init_function_name`.
 - Prefer `named_collection` for credentials. Use direct `init_function_parameters`
   only for non-secret values or when intentionally overriding an overridable
@@ -114,7 +117,7 @@ Use a named collection when Python code needs credentials. Put one string value
 under the `init_function_parameters` key, usually JSON. The DBMS merges the named
 collection into external-stream settings before constructing the Python storage,
 then calls the init hook with that string before `read_function_name` or
-`write_function_name` runs.
+`write_function_name` runs. This pattern requires Timeplus Enterprise 3.2.1+.
 
 ```sql
 CREATE NAMED COLLECTION api_source_creds AS
