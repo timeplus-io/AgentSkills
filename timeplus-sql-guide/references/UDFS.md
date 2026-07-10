@@ -254,6 +254,62 @@ def function_name(param_values, ...):
 $$;
 ```
 
+### Python UDF Initialization and Credentials
+
+Python UDFs can define an initialization hook that runs once when the Python
+module is loaded. Use it to parse credentials or other configuration into
+module-level globals before the scalar UDF or aggregate UDF state is used.
+
+For credentials, prefer a named collection. The UDF metadata stores only the
+collection name; the collection value is resolved when the UDF module loads.
+
+```sql
+CREATE NAMED COLLECTION api_udf_creds AS
+    init_function_parameters = '{"api_key":"secret-token","endpoint":"https://api.example.com"}'
+    NOT OVERRIDABLE;
+
+CREATE OR REPLACE FUNCTION add_api_prefix(value string)
+RETURNS string
+LANGUAGE PYTHON AS $$
+import json
+
+API_KEY = ''
+ENDPOINT = ''
+
+def _tp_init(params):
+    global API_KEY, ENDPOINT
+    cfg = json.loads(params)
+    API_KEY = cfg['api_key']
+    ENDPOINT = cfg['endpoint']
+
+def add_api_prefix(values):
+    return [ENDPOINT + ':' + v for v in values]
+$$
+SETTINGS init_function_name = '_tp_init',
+         named_collection = 'api_udf_creds';
+```
+
+Rules from the current DBMS implementation:
+
+- `init_function_name` is optional. If set, the named Python function must exist
+  in the UDF source.
+- The init hook is called with one string argument when `init_function_parameters`
+  is available, and with no arguments when no parameter source is configured.
+- A named collection used for Python UDF credentials should provide the key
+  `init_function_parameters`; pack multiple values into JSON.
+- `named_collection` and direct `init_function_parameters` are mutually
+  exclusive. Both require `init_function_name`.
+- Direct `init_function_parameters` appears in `SHOW CREATE FUNCTION`; a named
+  collection keeps the secret value out of UDF metadata.
+- Creating a UDF that references a named collection requires:
+
+```sql
+GRANT NAMED COLLECTION ON *.* TO user_name;
+```
+
+For Python aggregate UDFs, the init hook runs before aggregate state instances
+are constructed, so constructors can read globals initialized by `_tp_init`.
+
 ### Python UDF Examples
 
 ```sql

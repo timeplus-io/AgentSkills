@@ -159,7 +159,8 @@ LANGUAGE JAVASCRIPT AS $$ { initialize, process, finalize, serialize, deserializ
 -- Python UDF (Enterprise)
 CREATE [OR REPLACE] FUNCTION name(param type, ...)
 RETURNS return_type
-LANGUAGE PYTHON AS $$ ... $$;
+LANGUAGE PYTHON AS $$ ... $$
+[SETTINGS init_function_name = '...', named_collection = '...'];
 
 -- Remote UDF
 CREATE REMOTE FUNCTION name(param type, ...)
