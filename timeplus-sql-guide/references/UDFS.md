@@ -221,7 +221,10 @@ GROUP BY window_start, device_id;
 ## 3. Python UDF (Enterprise 2.7+)
 
 Python UDFs run in an embedded Python 3.10 interpreter. They receive
-**lists of values** and must return a list of results.
+**lists of values** and must return a list of results. Current Timeplus engines
+pass SQL `string` values into Python as `bytes` for binary safety, including
+strings nested inside `array(string)`, tuples, maps, and low-cardinality strings.
+Decode at the boundary before text processing.
 
 ### Install Python Packages
 
@@ -247,12 +250,29 @@ RETURNS return_type
 LANGUAGE PYTHON AS $$
 import numpy as np
 
+def to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def function_name(param_values, ...):
-    # param_values is a list
+    # param_values is a list; string values are bytes
     # return a list of results of same length
-    return [your_logic(v) for v in param_values]
+    return [your_logic(to_text(v)) for v in param_values]
 $$;
 ```
+
+For `array(string)`, decode each nested element:
+
+```python
+def to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
+def to_text_array(values):
+    return [to_text(v) for v in values]
+```
+
+Returning either Python `str` or `bytes` is accepted for SQL `string` results.
+Prefer `str` after text processing; keep `bytes` only when the payload is meant
+to stay binary.
 
 ### Python UDF Initialization and Credentials
 
@@ -282,8 +302,11 @@ def _tp_init(params):
     API_KEY = cfg['api_key']
     ENDPOINT = cfg['endpoint']
 
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def add_api_prefix(values):
-    return [ENDPOINT + ':' + v for v in values]
+    return [ENDPOINT + ':' + _to_text(v) for v in values]
 $$
 SETTINGS init_function_name = '_tp_init',
          named_collection = 'api_udf_creds';
@@ -349,11 +372,14 @@ RETURNS array(string)
 LANGUAGE PYTHON AS $$
 import json
 
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def extract_tags(payloads):
     result = []
     for p in payloads:
         try:
-            data = json.loads(p)
+            data = json.loads(_to_text(p))
             result.append(data.get('tags', []))
         except Exception:
             result.append([])
@@ -364,10 +390,13 @@ $$;
 CREATE OR REPLACE FUNCTION classify_message(msg string)
 RETURNS string
 LANGUAGE PYTHON AS $$
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def classify_message(messages):
     categories = []
     for msg in messages:
-        msg_lower = msg.lower()
+        msg_lower = _to_text(msg).lower()
         if any(w in msg_lower for w in ['error', 'fail', 'exception', 'crash']):
             categories.append('error')
         elif any(w in msg_lower for w in ['warn', 'slow', 'timeout']):
@@ -387,8 +416,11 @@ cat <<'EOF' | curl "http://${TIMEPLUS_HOST}:8123/" \
 CREATE OR REPLACE FUNCTION add_prefix(s string)
 RETURNS string
 LANGUAGE PYTHON AS $$
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def add_prefix(strings):
-    return ['prefix_' + s for s in strings]
+    return ['prefix_' + _to_text(s) for s in strings]
 $$
 EOF
 ```

@@ -93,6 +93,9 @@ SETTINGS
 - `read_function_name` defaults to the stream name if omitted.
 - `write_function_name` defaults to `read_function_name` if omitted.
 - All Python code goes inside the `$$ ... $$` heredoc.
+- Incoming SQL `string` values are Python `bytes` for binary safety. This
+  affects write functions and `python_table()` transforms, including nested
+  `array(string)` elements. Decode before text processing.
 - `init_function_parameters` requires `init_function_name`.
 - Prefer `named_collection` for credentials. Use direct `init_function_parameters`
   only for non-secret values or when intentionally overriding an overridable
@@ -245,11 +248,14 @@ CREATE EXTERNAL STREAM webhook_sink (
 AS$$
 import requests
 
+def _to_text(value):
+    return value.decode('utf-8') if isinstance(value, (bytes, bytearray)) else value
+
 def send_to_webhook(event_type, payload):
     for etype, body in zip(event_type, payload):
         requests.post(
             'https://hooks.example.com/ingest',
-            json={'type': etype, 'data': body}
+            json={'type': _to_text(etype), 'data': _to_text(body)}
         )
 $$
 SETTINGS
@@ -393,6 +399,7 @@ WHERE  position('timeplus' IN lower(text)) > 0;
 | Using `async def` or `async for` | Not supported — use threads + `queue.Queue` to bridge async libs |
 | Forgetting `type = 'python'` in SETTINGS | Always required |
 | Returning a plain value instead of a tuple in multi-column transform | Each row must be a tuple: `(val1, val2)` |
+| Treating incoming SQL strings as Python `str` | Decode `bytes` values first, including nested `array(string)` elements |
 | Importing heavy packages at module level in a tight loop | Move imports outside the generator/function body |
 | Installing packages after stream creation | Run `SYSTEM INSTALL PYTHON PACKAGE` before `CREATE EXTERNAL STREAM` |
 | Putting credentials directly in the Python body | Put JSON credentials in a named collection under `init_function_parameters` and parse it in an init hook |
@@ -412,3 +419,6 @@ When helping a user write a Python Table Function, always:
 6. **Test the schema match** — the number and order of columns returned by the function must exactly match the `CREATE EXTERNAL STREAM` column list.
 7. **Use named collections for credentials** — pack secrets as JSON in the
    `init_function_parameters` collection key and parse them in an init hook.
+8. **Decode incoming strings** — write and transform functions receive SQL
+   strings as Python `bytes`; decode them before string matching, regex, JSON
+   object construction, or HTTP request payload generation.
